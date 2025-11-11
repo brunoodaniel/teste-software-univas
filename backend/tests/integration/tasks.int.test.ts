@@ -1,4 +1,4 @@
-import { describe, it, beforeAll, afterAll, beforeEach, expect } from 'vitest'
+import { describe, it, afterAll, beforeEach, expect } from 'vitest'
 import request from 'supertest'
 import app, { prisma as appPrisma } from '../../src/index'
 import { prisma, resetDb, seedMinimal } from './testDb'
@@ -24,6 +24,7 @@ describe('Tasks API', () => {
         categoryId: category.id,
       })
     expect(res.status).toBe(201)
+    expect(res.body.success).toBe(true)
     expect(res.body.data).toMatchObject({ title: 'Comprar pão', userId: user.id })
   })
 
@@ -39,6 +40,7 @@ describe('Tasks API', () => {
     })
     const res = await request(app).get('/api/tasks')
     expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
     expect(Array.isArray(res.body.data)).toBe(true)
     expect(res.body.data.some((t: any) => t.title === 'Estudar Vitest')).toBe(true)
   })
@@ -46,7 +48,12 @@ describe('Tasks API', () => {
   it('PUT /api/tasks/:id atualiza uma tarefa', async () => {
     const { user, category } = await seedMinimal()
     const task = await prisma.task.create({
-      data: { title: 'Lavar o carro', description: 'Antes do almoço', userId: user.id, categoryId: category.id },
+      data: {
+        title: 'Lavar o carro',
+        description: 'Antes do almoço',
+        userId: user.id,
+        categoryId: category.id,
+      },
     })
 
     const res = await request(app)
@@ -54,6 +61,7 @@ describe('Tasks API', () => {
       .send({ title: 'Lavar o carro (tarde)' })
 
     expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
     expect(res.body.data.title).toBe('Lavar o carro (tarde)')
   })
 
@@ -65,6 +73,7 @@ describe('Tasks API', () => {
 
     const res = await request(app).delete(`/api/tasks/${task.id}`)
     expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
 
     const exists = await prisma.task.findUnique({ where: { id: task.id } })
     expect(exists).toBeNull()
